@@ -14,4 +14,15 @@ QuickNotes is a lightweight, responsive note-taking web application designed to 
    ```bash
    git clone [https://github.com/your-username/quicknotes-app.git](https://github.com/your-username/quicknotes-app.git)
 
-   
+Navigate into the project folder:
+
+Bash
+cd quicknotes-app
+Open index.html in your web browser, or launch it using an extension like Live Server in Visual Studio Code.
+
+## What I Learned
+1. DOM Security & Construction: Building user interfaces dynamically using createElement and textContent instead of vulnerable innerHTML insertions.
+
+2. State & Local Storage Management: Managing application data arrays reliably alongside browser storage APIs (JSON.stringify / JSON.parse).
+
+3. Modular CSS Variables & Layouts: Utilizing CSS variables for maintainable theme customization and combining   Flexbox with media queries for seamless mobile responsiveness.
