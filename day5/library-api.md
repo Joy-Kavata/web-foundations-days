@@ -58,3 +58,10 @@ Success Status Code: 200 OK
 - **Path:** /api/books?author=name
 - **Description:** Retrieve a filtered list of books written by a specific author using a query parameter.
 - **Success Status Code:** 200 OK
+
+## Error Handling & Status Codes
+
+- **`400 Bad Request`**
+  - **When it happens:** Triggered when a `POST` or `PUT` request is submitted with missing required fields or malformed JSON syntax.
+- **`404 Not Found`**
+  - **When it happens:** Triggered when a `GET`, `PUT`, or `DELETE` request targets a specific book ID that does not exist in the database.
