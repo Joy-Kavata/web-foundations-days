@@ -62,3 +62,31 @@
          ├──► [ Object Storage ] (stores raw 2MB photos & 50KB thumbnails)
          │
          └──► [ Message Queue (RabbitMQ/SQS) ] ──► [ Background Worker ] (generates thumbnails)
+
+       ## 6. Component Explanations
+        - **CDN (Content Delivery Network):** Serves cached photos and thumbnails from geographically distributed edge servers close to users to minimize latency and offload traffic from origin servers.
+        - **Load Balancer:** Distributes incoming user requests evenly across application server instances to prevent bottlenecks and ensure high availability.
+        - **App Servers:** Stateless application servers that execute core business logic, perform authentication, and coordinate database/storage operations.
+        - **Cache (Redis):** Stores frequently requested feed data and user session information in memory to deliver ultra-fast read responses without querying the primary database.
+        - **Database Primary:** Serves as the single authority for write operations, ensuring data integrity for user profiles, follow relationships, and post metadata.
+        - **Database Read Replica:** Asynchronously replicates data from the primary database to handle heavy feed and profile read queries independently.
+        - **Object Storage (AWS S3):** Provides scalable and cost-effective storage for large unstructured binary media, including original 2 MB photos and generated 50 KB thumbnails.
+        - **Message Queue & Background Worker:** Receives asynchronous thumbnail creation tasks from app servers and processes heavy image compression jobs in the background without delaying user responses.
+
+       ## 7. Step-by-Step Upload Flow
+        1. **Client Request:** The mobile app or web client initiates an HTTP POST request containing the photo file and post metadata to the Load Balancer, which routes it to an available stateless App Server.
+        2. **Raw File Storage:** The App Server immediately streams the original 2 MB image file to Object Storage and receives a unique object key/URL in response.
+        3. **Metadata Persistence:** The App Server writes a new record containing post metadata (author ID, timestamp, caption, raw photo URL) into the Database Primary.
+        4. **Asynchronous Hand-off:** The App Server pushes a thumbnail generation task (containing the post ID and raw photo URL) to the Message Queue.
+        5. **Immediate Client Response:** The App Server immediately returns an HTTP `201 Created` status to the client, allowing the user to continue using the application without waiting for image processing.
+        6. **Background Worker Execution:** A Background Worker pulls the task from the Message Queue, downloads the original image from Object Storage, generates a compressed 50 KB thumbnail, uploads the thumbnail back to Object Storage, and updates the post record in the database with the thumbnail URL.
+
+        ## 8. Operational Trade-Offs
+
+        ### Trade-Off 1: Asynchronous Processing vs. Immediate Media Availability
+        - **Decision:** Thumbnail generation is decoupled using a message queue rather than computed synchronously during the HTTP request.
+        - **Trade-Off:** Users receive immediate upload confirmation and lower request latency, but followers viewing the feed within milliseconds of the upload may briefly see a placeholder until the background worker finishes generating and saving the 50 KB thumbnail.
+
+        ### Trade-Off 2: Read Replicas & Replication Lag vs. Strict Read Consistency
+        - **Decision:** Heavy read queries (feed views) are routed to read replicas rather than forcing all reads through the primary database.
+        - **Trade-Off:** The database gains massive read scaling capability, but a slight replication lag (typically milliseconds) means a user might not immediately see their newly created post on their own feed if the read replica has not synchronized with the primary database yet.
